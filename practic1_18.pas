@@ -12,16 +12,20 @@ var
     programMode: prMods;
     errorFlag, testRandom: boolean; {Флаг ошибки ввода и флаг тестового режима (без ввода массива)}
 
-procedure readData(var arr: vector; var n: integer;{Чтение данных} 
-                    var sortType: tSort; var programMode: prMods);
+{Чтение данных, возвращает true если считывание прошло успешно}
+function readData(var arr: vector; var n: integer; 
+                    var sortType: tSort; var programMode: prMods): boolean;
 var 
     tmp: int64;
+    errorFlag: boolean;
 
-    procedure readInt(var el:int64); {Считывание целых чисел}
+    {Считывание целых чисел, возвращает true если считывание прошло успешно}
+    function readInt(var el:int64): boolean;
     var 
         c: char;
-        sign, flag, flagEoln: boolean;
+        sign, flag, flagEoln, errorFlag: boolean;
     begin
+        errorFlag := false;
         el := 0;
         c := ' ';
         while (c = ' ') do 
@@ -59,37 +63,39 @@ var
             if not flag and (c <> ' ') then 
             begin 
                 writeln('Error ожидалась цифра пробел или перенос строки, а полученно ', c);
-                errorFlag := true;
+                errorFlag := true
             end
             else if sign then el := -el
-        end
+        end;
+        readInt := not errorFlag;
     end;
 
-begin 
+begin
+    errorFlag := false;
     write('Enter sequence size: '); 
-    readInt(tmp);
-    if (tmp > MAXSIZE) or (tmp <= 0) then
+    errorFlag := not readInt(tmp);
+    if not errorFlag and ((tmp > MAXSIZE) or (tmp <= 0)) then
     begin 
         writeln('Error, a natural number <= 100 was expected');
         errorFlag := true;
     end else n := tmp;
     if not errorFlag then 
     begin
-	if testRandom then 
-	    for i := 1 to n do
-		    arr[i] := random(200) - 100
-    	else 
-	begin
-            write('Enter sequence: ');
-            for i := 1 to n do 
-                if not errorFlag then 
-                    readInt(arr[i]);
-        end;
+        if testRandom then 
+            for i := 1 to n do
+                arr[i] := random(200) - 100
+            else 
+            begin
+                write('Enter sequence: ');
+                for i := 1 to n do 
+                    if not errorFlag then 
+                        errorFlag := not readInt(arr[i]);
+            end;
     end;
     if not errorFlag then
     begin
         write('Sort type (1 - incresing sequence, 2 - descending sequence): ');
-        readInt(tmp);
+        errorFlag := not readInt(tmp);
         case tmp of
             1: sortType := incresing;
             2: sortType := descending;
@@ -98,11 +104,12 @@ begin
                 errorFlag := true
             end  
         end;
+        {В случае обратной сортировки весь массив умножается на -1}
         if sortType = Descending then for i := 1 to n do arr[i] := -arr[i]
     end;
     if not errorFlag then begin
         write('Program mode (1 - Release, 2 - Debug): ');
-        readInt(tmp);
+        errorFlag := not readInt(tmp);
         case tmp of
             1: programMode := Release;
             2: programMode := Debug;
@@ -112,14 +119,16 @@ begin
                 errorFlag := true
             end  
         end
-    end
+    end;
+    readData := not errorFlag;
 end;
 
 procedure writeArr(var arr: vector; n: integer);
 var 
     i, sign: integer;
 begin
-    if sortType = Incresing then sign := 1
+    {В случае обратной сортировки весь массив является умноженым на -1}
+    if sortType = Incresing then sign := 1 
     else sign := -1;
     for i := 1 to n do
         write(sign*arr[i], ' ');
@@ -135,12 +144,12 @@ begin
     writeln;
 end;
 
-procedure writeResultSort(var arr, arrR: vector; var n: integer);
+procedure writeResultSort(var arr, arrS: vector; var n: integer);
 begin
     write('Source sequence: ');
     writeArr(arr, n);
     write('Final sequence: ');
-    writeArr(arrR, n);
+    writeArr(arrS, n);
     writeln('Number of comparisons: ', countCmp);
     writeln('Number of movements: ', countMove);
     writeln;
@@ -166,12 +175,11 @@ begin
     currCmp := 0;
     currMove := 0;
     i := 1;
-    while (i <= n) do 
+    for i := 1 to n do 
     begin
         step := step + 1;
         maxel := arr[1];
         maxi := 1;
-	j := 1;
         for j := 1 to n-i+1 do 
         begin
             currCmp := currCmp + 1; {Сравнение arr[j] > maxel}
@@ -182,15 +190,14 @@ begin
                 maxi := j
             end	
         end;
-	currCmp := currCmp + 1;
-	if j <> maxi then 
-	begin
-        	currMove := currMove + 2; {swap}
-        	swap(arr[j], arr[maxi]);
-	end;
+        currCmp := currCmp + 1;
+        if j <> maxi then 
+        begin
+            currMove := currMove + 2; {swap}
+            swap(arr[j], arr[maxi]);
+        end;
         if programMode = Debug then 
             writeDebugStep(arr, n, step, currCmp, currMove);
-	i := i + 1;
     end;
     countCmp := currCmp;
     countMove := currMove
@@ -202,15 +209,6 @@ procedure quick_sort(var arr: vector; n: integer);
 var 
     arrCopy: vector;
     i, step, currCmp, currMove: integer;
-    
-    procedure warr(var arr: vector; a,b: integer);
-    var i: integer;
-    begin
-        writeln('arr');
-        for i := a to b do
-            write(arr[i], ' ');
-        writeln;
-    end;
 
     procedure quick_sort_(var arr1, arr2: vector; a, b: integer);
     var i,x,y : integer;
@@ -277,16 +275,16 @@ end;
 
 begin
     testRandom := false;
-    errorFlag := false;
-    readData(arr, n, sortType, programMode);
+    errorFlag := not readData(arr, n, sortType, programMode);
     {
         После считывания данных глобальная переменная errorFlag,
-        может быть изменена на true, что означает ошибку ввода
+        может быть false, что означает ошибку ввода
         и последующие выполнение программы бессмысленно
     }
     if not errorFlag then 
     begin
         arrcopy := arr;
+        writeln;
         writeln('Sort method 1: Insert sort');
         insert_sort(arrcopy, n);
         writeResultSort(arr, arrcopy, n);
