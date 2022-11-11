@@ -10,14 +10,14 @@ var
     i,n, countCmp, countMove: integer;
     sortType: tSort;
     programMode: prMods;
-    errorFlag: boolean;
+    errorFlag, testRandom: boolean; {Флаг ошибки ввода и флаг тестового режима (без ввода массива)}
 
-procedure readData(var arr: vector; var n: integer; 
+procedure readData(var arr: vector; var n: integer;{Чтение данных} 
                     var sortType: tSort; var programMode: prMods);
 var 
     tmp: int64;
 
-    procedure readInt(var el:int64);
+    procedure readInt(var el:int64); {Считывание целых чисел}
     var 
         c: char;
         sign, flag, flagEoln: boolean;
@@ -66,7 +66,7 @@ var
     end;
 
 begin 
-    write('Enter sequence size: ');
+    write('Enter sequence size: '); 
     readInt(tmp);
     if (tmp > MAXSIZE) or (tmp <= 0) then
     begin 
@@ -75,10 +75,16 @@ begin
     end else n := tmp;
     if not errorFlag then 
     begin
-        write('Enter sequence: ');
-        for i := 1 to n do 
-            if not errorFlag then 
-                readInt(arr[i]);
+	if testRandom then 
+	    for i := 1 to n do
+		    arr[i] := random(200) - 100
+    	else 
+	begin
+            write('Enter sequence: ');
+            for i := 1 to n do 
+                if not errorFlag then 
+                    readInt(arr[i]);
+        end;
     end;
     if not errorFlag then
     begin
@@ -159,28 +165,32 @@ begin
     step := 0;
     currCmp := 0;
     currMove := 0;
-    for i := 1 to n do 
+    i := 1;
+    while (i <= n) do 
     begin
         step := step + 1;
-        currMove := currMove + 3; {step for + maxel + maxi}
         maxel := arr[1];
         maxi := 1;
+	j := 1;
         for j := 1 to n-i+1 do 
         begin
-            currMove := currMove + 1; {step for}
-            currCmp := currCmp + 1; {if}
+            currCmp := currCmp + 1; {Сравнение arr[j] > maxel}
             if arr[j] > maxel then 
-            begin 
-                currMove := currMove + 2;
+            begin
                 {Макисимум}
                 maxel := arr[j];
                 maxi := j
-            end
+            end	
         end;
-        currMove := currMove + 3; {swap}
-        swap(arr[j], arr[maxi]);
+	currCmp := currCmp + 1;
+	if j <> maxi then 
+	begin
+        	currMove := currMove + 2; {swap}
+        	swap(arr[j], arr[maxi]);
+	end;
         if programMode = Debug then 
-            writeDebugStep(arr, n, step, currCmp, currMove)
+            writeDebugStep(arr, n, step, currCmp, currMove);
+	i := i + 1;
     end;
     countCmp := currCmp;
     countMove := currMove
@@ -207,7 +217,6 @@ var
     begin
         if a < b then
         begin
-            currMove := currMove + 3; {x,y,i}
             x := a;
             y := a + (b-a) div 2 + 1;
             i := a;
@@ -215,26 +224,34 @@ var
             quick_sort_(arr2, arr1, y, b);
             for i := a to b do 
             begin
-                currMove := currMove + 3; {step for + if}
+                {
+                    Одно присвоение одного элемента массива другому,
+                    будет в любом из уловных операторов
+                }
+		        currMove := currMove + 1;
                 if x > a + (b-a) div 2 then 
                 begin
+                    {Сравнение if (cmp), где cmp это сравнение}
                     currCmp := currCmp + 1;
                     arr1[i] := arr2[y];
                     y := y + 1
                 end
                 else if y > b then 
                 begin
+                    {Сравнение if (cmp) else if (cmp), где cmp это сравнение}
                     currCmp := currCmp + 2;
                     arr1[i] := arr2[x];
                     x := x + 1
                 end
                 else if arr2[x] > arr2[y] then
                 begin
+                    {Сравнение if (cmp) else if (cmp) else if (cmp), где cmp это сравнение}
                     currCmp := currCmp + 3;
                     arr1[i] := arr2[y];
                     y := y + 1
                 end 
                 else begin
+                    {Сравнение if (cmp) else if (cmp) else if (cmp) else , где cmp это сравнение}
                     currCmp := currCmp + 3;
                     arr1[i] := arr2[x];
                     x := x + 1
@@ -242,9 +259,7 @@ var
             end;
             step := step + 1;
             if programMode = Debug then 
-            begin 
                 writeDebugStep(arr1, n, step, currCmp, currMove);
-            end;
         end
     end;
 
@@ -261,8 +276,14 @@ begin
 end;
 
 begin
+    testRandom := false;
     errorFlag := false;
     readData(arr, n, sortType, programMode);
+    {
+        После считывания данных глобальная переменная errorFlag,
+        может быть изменена на true, что означает ошибку ввода
+        и последующие выполнение программы бессмысленно
+    }
     if not errorFlag then 
     begin
         arrcopy := arr;
