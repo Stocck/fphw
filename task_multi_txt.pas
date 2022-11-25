@@ -1,16 +1,8 @@
+const MULTITASK = 2;
 var 
 	f, g: text;
-	tmpInt,res: integer;
+	tmpInt, countInt, i, modInt: int64;
     c: char;
-    flag : boolean;
-
-procedure writeInt(var f: file; el:integer);
-begin
-    if el < 10 then 
-        writeInt(f, el div 10);
-    write(f, el mod 10);
-end;
-
 
 begin
 	assign(f,'unput.txt');
@@ -18,20 +10,28 @@ begin
 	reset(f);
     rewrite(g);
     
-    flag := false;
+    countInt := 0;
     tmpInt := 0;
+    modInt := 1;
 	while not eof(f) do
 	begin
 		read(f, c);
 		if ('0' <= c) and (c <= '9') then 
         begin
-            flag := true;
+            countInt := countInt + 1;
             tmpInt := tmpInt * 10 + ord(c) - ord('0');
-        end else if flag then 
-        begin 
-            writeInt(g, tmpInt);
+            modInt := 10 * modInt
+        end else if countInt <> 0 then 
+        begin
+            tmpInt := tmpInt * MULTITASK;
+            for i := countInt downto 1 do
+            begin
+                write(g, tmpInt mod modInt);
+                modInt := modInt mod 10;
+            end;
             tmpInt := 0;
-            flag := false
+            countInt := 0
+            modInt := 1;
         end else write(g, c);
 	end;
 	close(f);
