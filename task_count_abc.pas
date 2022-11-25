@@ -5,9 +5,6 @@ var
 	c, c1, pc: char;
 	s: set of 'a'..'z';
 
-procedure sort()
-
-
 begin
 	assign(f, 'input.txt');
 	reset(f);
@@ -22,8 +19,14 @@ begin
 	s := [];
 	for c := 'a' to 'z' do
 	begin
-		i := arr['a']; 
+		i := -1;
 		for c1 := 'a' to 'z' do
-			if  
+			if not(c1 in s) and (arr[c1] > i) then
+			begin
+				i := arr[c1];
+				pc := c1;
+			end;
+		writeln(pc, ' - ', i);
+		s := s + [pc];
 	end;
 end.
