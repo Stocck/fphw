@@ -10,8 +10,8 @@ interface
     function integral(f: TF; a,b: real; var n_c: integer):real;
 implementation
 
-    procedure readEps1(x: real); begin eps1 := x end;
-    procedure readEps2(x: real); begin eps2 := x end;
+    procedure setEps1(x: real); begin eps1 := x end;
+    procedure setEps2(x: real); begin eps2 := x end;
 
     function root(h, g, h1, g1: TF; a,b: real): real;
     {Метод касательных (Ньютона)}
