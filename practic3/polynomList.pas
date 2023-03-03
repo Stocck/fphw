@@ -174,32 +174,20 @@ implementation
     function sum(p1,p2: polimon): polimon;
     var ds: polimon;
 
-        procedure sum_(var ds, p: polimon);
+        procedure sum_(var ds, p1: polimon);
         begin
-            push(ds, p^.ratioX, p^.degreeX);
-            p := p^.next;
-        end;
-
-        function sum1(var ds,p1,p2: polimon): boolean;
-        begin
-            sum1 := true;
-            if p1 = nil then
-                sum_(ds,p2)
-            else if p2 = nil then
-                sum_(ds, p1)
-            else if p2^.degreeX > p1^.degreeX then
-                sum_(ds, p2)
-            else begin sum_(ds, p1); sum1 := false end;
+            while p1 <> nil do
+            begin 
+                push(ds,p1^.ratioX, p1^.degreeX);
+                p1 := p1^.next;
+            end; 
         end;
 
     begin
         ds := nil;
-        if (p1 <> nil) and (p2 <> nil) then
-            sum1(ds, p1, p2);
+        sum_(ds,p1);
+        sum_(ds,p2);
         sum := ds;
-        while (p1 <> nil) or (p2 <> nil) do
-            if sum1(ds^.next, p1, p2) then
-                ds := ds^.next;
     end;
 
     function multiplication(p1,p2: polimon): polimon;
@@ -224,8 +212,8 @@ implementation
 
         procedure printEl(a,b: TE);
         begin
-            if (a <> 1) or (b = 0) then write(a);
-            if (a = -1) and (b <> 0) then write('-');
+            if (a = -1) and (b <> 0) then write('-')
+            else if (a <> 1) or (b = 0) then write(a);
             if (b <> 0) then write('x');
             if b > 1 then write('^', b);
         end;
